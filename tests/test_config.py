@@ -9,7 +9,8 @@ def test_settings_defaults() -> None:
     assert settings.api_port == 8000
     assert settings.app_profile is AppProfile.API
     assert settings.temporal_namespace == "backend-foundation"
-    assert "5432" in settings.database_url
+    assert "55432" in settings.database_url
+    assert settings.database_host_port == 55432
     assert settings.docker_project_name == "backend-foundation"
     assert settings.temporal_ui_url == "http://localhost:8233"
     assert settings.auto_register_namespace

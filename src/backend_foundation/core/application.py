@@ -74,6 +74,10 @@ def create_app(
         for router in module.routers:
             app.include_router(router)
 
+    @app.get("/")
+    async def root() -> dict[str, str]:
+        return {"name": configured.app_name, "status": "ok", "docs": "/docs"}
+
     @app.get("/health/live")
     async def live() -> dict[str, str]:
         return {"status": "ok"}

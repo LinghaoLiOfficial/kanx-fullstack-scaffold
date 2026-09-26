@@ -254,8 +254,12 @@ def _frontend_capabilities(modules: tuple[str, ...]) -> tuple[str, ...]:
 
 def _create_frontend(destination: Path, context: dict[str, str], modules: tuple[str, ...]) -> None:
     capabilities = _frontend_capabilities(modules)
+    frontend_package_name = context["PROJECT_SLUG"]
+    if not frontend_package_name.endswith("-frontend"):
+        frontend_package_name += "-frontend"
     frontend_context = {
         **context,
+        "FRONTEND_PACKAGE_NAME": frontend_package_name,
         "FRONTEND_CAPABILITIES": json.dumps(list(capabilities)),
         "AUTH_ENABLED": str("auth" in modules).lower(),
         "STORAGE_ENABLED": str("storage" in modules).lower(),
@@ -576,12 +580,23 @@ def _doctor_backend(project: Path, environment: str | None = None) -> int:
     return 0
 
 
+def _find_component(project: Path, marker: str) -> Path | None:
+    """Find one top-level component directory by a stable project marker."""
+    candidates = sorted(
+        path.parent for path in project.glob(f"*/{marker}") if path.is_file()
+    )
+    return candidates[0] if len(candidates) == 1 else None
+
+
 def doctor(project: Path, environment: str | None = None) -> int:
     project = project.resolve()
-    backend = project / "backend"
-    frontend = project / "frontend"
-    if not backend.is_dir() or not frontend.is_dir():
-        print("ERROR fullstack: expected backend/ and frontend/ directories")
+    backend = _find_component(project, "module.toml")
+    frontend = _find_component(project, "package.json")
+    if backend is None or frontend is None:
+        print(
+            "ERROR fullstack: expected one child with module.toml (backend) and one "
+            "child with package.json (frontend)"
+        )
         return 1
     required = (
         project / "README.md",

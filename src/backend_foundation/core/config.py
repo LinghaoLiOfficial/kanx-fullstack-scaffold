@@ -76,12 +76,12 @@ class Settings(EnvironmentSettings):
     observability_exporter_timeout_seconds: float = Field(default=2.0, gt=0, le=30)
 
     database_url: str = (
-        "postgresql+asyncpg://foundation:foundation@localhost:5432/backend_foundation"
+        "postgresql+asyncpg://foundation:foundation@localhost:55432/backend_foundation"
     )
     database_user: str = "foundation"
     database_password: str = "foundation"
     database_name: str = "backend_foundation"
-    database_host_port: int = Field(default=5432, ge=1, le=65535)
+    database_host_port: int = Field(default=55432, ge=1, le=65535)
     compose_project_name: str | None = None
 
     temporal_host: str = "localhost:7233"

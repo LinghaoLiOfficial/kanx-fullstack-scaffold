@@ -210,15 +210,39 @@ def infra_up(settings: Settings) -> None:
         _compose(settings, "run", "--rm", "minio-init")
 
 
-def migrate() -> None:
-    _run(["uv", "run", "alembic", "upgrade", "head"])
+def _has_unknown_migration_revision() -> bool:
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "current"],
+        check=False,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    output = f"{result.stdout}\n{result.stderr}"
+    return result.returncode != 0 and "Can't locate revision identified by" in output
+
+
+def migrate(settings: Settings) -> None:
+    if _has_unknown_migration_revision():
+        if settings.deployed:
+            raise RuntimeError(
+                "Database uses a migration revision missing from this project. "
+                "Refusing to delete deployed data; restore the matching migration chain."
+            )
+        print(
+            "Detected an incompatible local database migration revision; "
+            "resetting local infrastructure volumes."
+        )
+        _compose(settings, "down", "--volumes", "--remove-orphans")
+        infra_up(settings)
+    _run([sys.executable, "-m", "alembic", "upgrade", "head"])
 
 
 def run_application_processes(settings: Settings) -> None:
     commands = [
         [
-            "uv",
-            "run",
+            sys.executable,
+            "-m",
             "uvicorn",
             "{{PACKAGE_NAME}}.app:app",
             "--reload",
@@ -229,11 +253,11 @@ def run_application_processes(settings: Settings) -> None:
         ]
     ]
     if _has("temporal"):
-        commands.append(["uv", "run", "python", "-m", "{{PACKAGE_NAME}}.modules.temporal.worker"])
+        commands.append([sys.executable, "-m", "{{PACKAGE_NAME}}.modules.temporal.worker"])
     if _has("jobs"):
-        commands.append(["uv", "run", "python", "-m", "{{PACKAGE_NAME}}.modules.jobs.dispatcher"])
+        commands.append([sys.executable, "-m", "{{PACKAGE_NAME}}.modules.jobs.dispatcher"])
     if _has("ai"):
-        commands.append(["uv", "run", "python", "-m", "{{PACKAGE_NAME}}.gradio_app"])
+        commands.append([sys.executable, "-m", "{{PACKAGE_NAME}}.gradio_app"])
     processes = [subprocess.Popen(command, cwd=ROOT) for command in commands]
     wait_for_port(settings.api_port)
     if _has("ai"):
@@ -278,7 +302,7 @@ def main() -> None:
     try:
         if command == "dev":
             infra_up(settings)
-            migrate()
+            migrate(settings)
             run_application_processes(settings)
         elif command == "infra-up":
             infra_up(settings)

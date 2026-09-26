@@ -1,5 +1,7 @@
 .DEFAULT_GOAL := dev
 .PHONY: dev dev-workflow dev-ai dev-identity dev-saas dev-full gradio lang-dev migrate check infra-up infra-down infra-status infra-reset smoke
+
+export PYTHONPATH := $(CURDIR)/src$(if $(PYTHONPATH),:$(PYTHONPATH))
 dev:
 	uv sync {{SYNC_EXTRAS}}
 	uv run python -m {{PACKAGE_NAME}}.dev dev
@@ -23,7 +25,7 @@ gradio:
 lang-dev:
 	uv run langgraph dev --config langgraph.json --host 127.0.0.1 --port 8123
 migrate:
-	uv run alembic upgrade head
+	uv run python -m alembic upgrade head
 infra-up:
 	uv run python -m {{PACKAGE_NAME}}.dev infra-up
 infra-down:
@@ -34,9 +36,9 @@ infra-reset:
 	uv run python -m {{PACKAGE_NAME}}.dev infra-reset
 check:
 	uv sync {{SYNC_EXTRAS}}
-	uv run ruff format .
-	uv run ruff check .
-	uv run mypy src
-	uv run pytest
+	uv run python -m ruff format .
+	uv run python -m ruff check .
+	uv run python -m mypy src
+	uv run python -m pytest
 smoke:
 	uv run python -m {{PACKAGE_NAME}}.dev smoke

@@ -4,7 +4,8 @@ from collections.abc import Sequence
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from ...core.config import AppProfile, Settings, get_settings
+from ...core.config import Settings, get_settings
+from ...core.installed_modules import INSTALLED_MODULES
 from ...core.logging import configure_logging
 from ...core.modules import ModuleSpec, load_modules
 from ...core.observability import configure_tracing
@@ -19,12 +20,7 @@ async def run_worker(
     configured = settings or get_settings()
     configure_logging(configured)
     configure_tracing(configured)
-    if configured.app_profile not in (
-        AppProfile.WORKFLOW,
-        AppProfile.IDENTITY,
-        AppProfile.SAAS,
-        AppProfile.FULL,
-    ):
+    if "temporal" not in INSTALLED_MODULES:
         raise RuntimeError("Temporal worker requires a profile with the temporal module")
     configured_modules = tuple(modules) if modules is not None else load_modules(configured)
     workflows = [item for module in configured_modules for item in module.workflows]

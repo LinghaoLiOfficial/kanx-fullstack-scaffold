@@ -4,10 +4,10 @@ Generated full-stack project using the `{{PROFILE}}` profile.
 
 ## Run everything
 
-Install the frontend dependencies once, then start both applications:
+Install the frontend dependencies once, then start both applications from this project root:
 
 ```bash
-cd frontend && pnpm install && cd ..
+cd your-frontend-directory && pnpm install && cd ..
 make dev
 ```
 
@@ -15,19 +15,20 @@ make dev
 - Backend API: http://localhost:8000
 - API documentation: http://localhost:8000/docs
 
-`make dev` only coordinates the two applications. Backend infrastructure remains owned by
-`backend/compose.yml` and stays running when the development processes stop.
+`make dev` discovers the backend by its `module.toml` and the frontend by its `package.json`, so
+you may rename or move those two directories. Backend infrastructure remains owned by the
+backend's `compose.yml` and stays running when the development processes stop.
 
 ## Run independently
 
 ```bash
-cd frontend
+cd your-frontend-directory
 pnpm install
 pnpm dev
 ```
 
 ```bash
-cd backend
+cd your-backend-directory
 make dev
 ```
 

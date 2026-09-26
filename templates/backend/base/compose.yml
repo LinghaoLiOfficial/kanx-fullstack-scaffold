@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-foundation}
       POSTGRES_DB: ${DATABASE_NAME:-{{DATABASE_NAME}}}
     ports:
-      - "${DATABASE_HOST_PORT:-5432}:5432"
+      - "${DATABASE_HOST_PORT:-55432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -27,6 +27,11 @@ services:
       postgres: {condition: service_healthy}
     ports:
       - "${TEMPORAL_HOST_PORT:-7233}:7233"
+    healthcheck:
+      test: ["CMD-SHELL", "temporal operator cluster health --address $$(hostname -i):7233"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
   temporal-ui:
     image: temporalio/ui:2.34.0
     profiles: [workflow]
@@ -41,9 +46,14 @@ services:
     environment:
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_NAMESPACE: ${TEMPORAL_NAMESPACE:-{{TEMPORAL_NAMESPACE}}}
-    depends_on: [temporal]
+    depends_on:
+      temporal: {condition: service_healthy}
     entrypoint: [/bin/sh, -c]
-    command: ["temporal operator namespace describe --namespace \"$${TEMPORAL_NAMESPACE}\" >/dev/null 2>&1 || temporal operator namespace create --namespace \"$${TEMPORAL_NAMESPACE}\" --retention 7d"]
+    command:
+      - >-
+        until temporal operator namespace describe --namespace "$${TEMPORAL_NAMESPACE}" >/dev/null 2>&1 ||
+        temporal operator namespace create --namespace "$${TEMPORAL_NAMESPACE}" --retention 7d;
+        do sleep 2; done
     restart: "no"
   mailpit:
     image: axllent/mailpit:v1.27.8

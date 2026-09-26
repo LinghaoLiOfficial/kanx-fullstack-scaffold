@@ -44,7 +44,7 @@ def test_port_available_accepts_owned_container(monkeypatch: pytest.MonkeyPatch)
         "run",
         lambda *_args, **_kwargs: type("Result", (), {"stdout": "demo/postgres\n"})(),
     )
-    dev.ensure_port_available(Settings(_env_file=None, app_slug="demo"), 5432, "postgres")
+    dev.ensure_port_available(Settings(_env_file=None, app_slug="demo"), 55432, "postgres")
 
 
 def test_missing_docker_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:

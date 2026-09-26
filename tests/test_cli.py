@@ -29,6 +29,13 @@ def test_new_generates_runnable_project(tmp_path: Path, profile: str) -> None:
     assert (destination / "backend" / "module.toml").exists()
     assert (destination / "backend" / "compose.yml").exists()
     assert (destination / "frontend" / "package.json").exists()
+    frontend_package = (destination / "frontend" / "package.json").read_text(encoding="utf-8")
+    assert f'"name": "demo-{profile}-frontend"' in frontend_package
+    assert '"predev": "pnpm install --frozen-lockfile"' in frontend_package
+    assert '"onlyBuiltDependencies": [' in frontend_package
+    assert '"esbuild"' in frontend_package
+    frontend_tsconfig = (destination / "frontend" / "tsconfig.json").read_text(encoding="utf-8")
+    assert ".next/dev/types/**/*.ts" in frontend_tsconfig
     assert (
         destination / "backend" / "src" / package_name(f"demo-{profile}") / "core" / "logging.py"
     ).exists()
@@ -36,6 +43,28 @@ def test_new_generates_runnable_project(tmp_path: Path, profile: str) -> None:
         destination / "frontend" / ".env.example"
     ).read_text()
     assert doctor(destination) == 0
+
+
+def test_doctor_and_root_contract_survive_component_renames(tmp_path: Path) -> None:
+    destination = create_project("Renamed Components", "api", tmp_path / "renamed-components")
+    (destination / "backend").rename(destination / "service-api")
+    (destination / "frontend").rename(destination / "web-client")
+
+    assert doctor(destination) == 0
+    root_makefile = (destination / "Makefile").read_text(encoding="utf-8")
+    assert "$(wildcard */module.toml)" in root_makefile
+    assert "$(wildcard */package.json)" in root_makefile
+
+
+def test_frontend_package_name_does_not_duplicate_suffix(tmp_path: Path) -> None:
+    destination = create_project(
+        "Already Frontend",
+        "api",
+        tmp_path / "already-frontend",
+    )
+    frontend_package = (destination / "frontend" / "package.json").read_text(encoding="utf-8")
+    assert '"name": "already-frontend"' in frontend_package
+    assert '"name": "already-frontend-frontend"' not in frontend_package
 
 
 def test_ai_project_configures_gradio_bind_address(tmp_path: Path) -> None:
@@ -61,6 +90,32 @@ def test_generated_identity_runtime_contract(tmp_path: Path) -> None:
     assert 'path="/auth"' in router
     assert 'path="/"' in router
     assert "cryptography>=45,<47" in pyproject
+
+
+def test_generated_custom_composition_uses_module_registry_for_runtime_workers(
+    tmp_path: Path,
+) -> None:
+    destination = create_project(
+        "Custom Workflow",
+        "custom",
+        tmp_path / "custom-workflow",
+        ("database", "temporal", "jobs"),
+    )
+    worker = (
+        destination
+        / "backend"
+        / "src"
+        / "custom_workflow"
+        / "modules"
+        / "temporal"
+        / "worker.py"
+    ).read_text(encoding="utf-8")
+    dev = (
+        destination / "backend" / "src" / "custom_workflow" / "dev.py"
+    ).read_text(encoding="utf-8")
+    assert "INSTALLED_MODULES" in worker
+    assert '"temporal" not in INSTALLED_MODULES' in worker
+    assert "_has_unknown_migration_revision" in dev
 
 
 def test_generated_project_ignores_local_environment_files(tmp_path: Path) -> None:

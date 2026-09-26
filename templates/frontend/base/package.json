@@ -1,8 +1,9 @@
 {
-  "name": "{{PROJECT_SLUG}}-frontend",
+  "name": "{{FRONTEND_PACKAGE_NAME}}",
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "pnpm install --frozen-lockfile",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -29,5 +30,12 @@
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   },
-  "packageManager": "pnpm@10.15.0"
+  "packageManager": "pnpm@10.15.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
 }

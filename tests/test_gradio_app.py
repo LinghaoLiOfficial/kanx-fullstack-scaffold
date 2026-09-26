@@ -33,7 +33,7 @@ def test_generate_project_zip_is_safe(tmp_path, monkeypatch) -> None:
         names = package.namelist()
         assert "zip-demo/backend/module.toml" in names
         assert "zip-demo/frontend/.gitignore" in names
-        assert "zip-demo/backend/.github/workflows/secrets.yml" in names
+        assert "zip-demo/backend/.github/workflows/secrets.yml" not in names
         assert "zip-demo/backend/.env" in names
         assert "zip-demo/frontend/.env" in names
         assert not any("/.git/" in name for name in names)
