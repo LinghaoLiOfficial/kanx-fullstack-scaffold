@@ -1,0 +1,6 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "agent": "{{PACKAGE_NAME}}.modules.ai.graph:compiled_graph"
+  }
+}

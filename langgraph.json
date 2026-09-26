@@ -1,0 +1,7 @@
+{
+  "$schema": "https://langgra.ph/schema.json",
+  "dependencies": ["."],
+  "graphs": {
+    "smoke": "./src/backend_foundation/modules/ai/graph.py:graph"
+  }
+}

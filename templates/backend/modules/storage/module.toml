@@ -1,0 +1,18 @@
+name = "storage"
+version = "0.1.0"
+description = "S3-compatible presigned file storage"
+requires = ["auth", "rbac", "jobs"]
+profiles = ["saas", "full"]
+optional_extra = "saas"
+provides_router = true
+provides_lifespan = false
+provides_health_check = false
+provides_workflows = false
+provides_activities = true
+model_imports = ["modules.storage.models"]
+permissions = ["files:read", "files:write", "files:delete", "files:versions:*", "files:uploads:*", "files:quarantine:read"]
+required_env = []
+optional_env = ["STORAGE_ENDPOINT_URL", "STORAGE_ACCESS_KEY", "STORAGE_SECRET_KEY", "STORAGE_BUCKET", "STORAGE_MULTIPART_THRESHOLD", "STORAGE_MULTIPART_PART_SIZE", "STORAGE_CDN_BASE_URL", "STORAGE_CDN_SIGNING_SECRET", "STORAGE_EVENT_WEBHOOK_SECRET", "STORAGE_EVENT_QUEUE_URL"]
+compose_files = ["minio"]
+python_dependencies = ["boto3>=1.40,<2", "cryptography>=45,<47", "httpx>=0.28,<1", "pillow>=11,<13"]
+migrations = ["migrations/storage.py"]

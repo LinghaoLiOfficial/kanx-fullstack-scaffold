@@ -1,0 +1,38 @@
+[project]
+name = "{{PROJECT_SLUG}}"
+version = "0.1.0"
+description = "{{PROJECT_NAME}} backend"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "alembic>=1.16,<2",
+  "asyncpg>=0.30,<1",
+  "fastapi>=0.115,<1",
+  "pydantic-settings>=2.10,<3",
+  "sqlalchemy[asyncio]>=2.0.36,<3",
+  "uvicorn[standard]>=0.35,<1",
+]
+[project.optional-dependencies]
+# {{OPTIONAL_DEPENDENCIES}}
+observability = [
+  "opentelemetry-api>=1.29,<2",
+  "opentelemetry-sdk>=1.29,<2",
+  "opentelemetry-exporter-otlp-proto-http>=1.29,<2",
+]
+[project.scripts]
+# {{PACKAGE_NAME}} = "{{PACKAGE_NAME}}.app:app"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.hatch.build.targets.wheel]
+packages = ["src/{{PACKAGE_NAME}}"]
+[dependency-groups]
+dev = ["httpx>=0.28,<1", "mypy>=1.17,<2", "pytest>=8.4,<9", "pytest-asyncio>=1.1,<2", "ruff>=0.12,<1"]
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+[tool.mypy]
+python_version = "3.12"
+strict = true
+exclude = "(^|/)(alembic|tests)/"

@@ -1,0 +1,17 @@
+name = "temporal"
+version = "0.1.0"
+description = "Temporal workflow integration"
+requires = ["database"]
+profiles = ["workflow", "identity", "saas", "full"]
+optional_extra = "workflow"
+provides_router = false
+provides_lifespan = true
+provides_health_check = true
+provides_workflows = true
+provides_activities = true
+model_imports = []
+permissions = []
+required_env = ["TEMPORAL_HOST", "TEMPORAL_NAMESPACE", "TEMPORAL_TASK_QUEUE"]
+optional_env = ["TEMPORAL_HOST_PORT", "TEMPORAL_UI_PORT"]
+compose_files = ["temporal", "temporal-ui", "namespace"]
+python_dependencies = ["temporalio>=1.18,<2"]

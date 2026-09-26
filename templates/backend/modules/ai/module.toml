@@ -1,0 +1,17 @@
+name = "ai"
+version = "0.1.0"
+description = "LangGraph and LangChain integration"
+requires = ["database"]
+profiles = ["ai", "full"]
+optional_extra = "ai"
+provides_router = false
+provides_lifespan = false
+provides_health_check = false
+provides_workflows = false
+provides_activities = false
+model_imports = []
+permissions = []
+required_env = []
+optional_env = ["AI_BASE_URL", "AI_API_KEY", "AI_MODEL", "AI_TEMPERATURE", "AI_MAX_TOKENS", "AI_TASK_CONFIGS"]
+compose_files = []
+python_dependencies = ["langchain-core>=1.6,<2", "langchain-openai>=1.0,<2", "langgraph>=1.2,<2"]

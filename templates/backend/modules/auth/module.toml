@@ -1,0 +1,18 @@
+name = "auth"
+version = "0.1.0"
+description = "Password authentication and sessions"
+requires = ["users", "rbac", "email"]
+profiles = ["identity", "saas", "full"]
+optional_extra = "identity"
+provides_router = true
+provides_lifespan = false
+provides_health_check = false
+provides_workflows = false
+provides_activities = false
+model_imports = ["modules.auth.models"]
+permissions = []
+required_env = ["AUTH_JWT_SECRET"]
+optional_env = ["AUTH_ALLOWED_ORIGINS", "AUTH_SECURE_COOKIES"]
+compose_files = []
+python_dependencies = ["pwdlib[argon2]>=0.3,<1", "pyjwt>=2.10,<3", "email-validator>=2.2,<3"]
+migrations = ["migrations/auth.py"]

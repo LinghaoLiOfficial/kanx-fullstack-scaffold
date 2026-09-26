@@ -1,0 +1,2 @@
+name = "saas"
+modules = ["database", "temporal", "jobs", "users", "rbac", "email", "auth", "storage"]

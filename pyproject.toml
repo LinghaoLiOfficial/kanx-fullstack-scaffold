@@ -1,0 +1,112 @@
+[project]
+name = "backend-foundation"
+version = "0.1.0"
+description = "Composable Python backend foundation"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "alembic>=1.16,<2",
+  "asyncpg>=0.30,<1",
+  "fastapi>=0.115,<1",
+  "email-validator>=2.2,<3",
+  "pydantic-settings>=2.10,<3",
+  "sqlalchemy[asyncio]>=2.0.36,<3",
+  "uvicorn[standard]>=0.35,<1",
+]
+[project.optional-dependencies]
+workflow = ["temporalio>=1.18,<2"]
+ai = ["langchain-core>=1.6,<2", "langchain-openai>=1.0,<2", "langgraph>=1.2,<2"]
+identity = [
+  "aiosmtplib>=4,<6",
+  "pwdlib[argon2]>=0.3,<1",
+  "pyjwt>=2.10,<3",
+  "temporalio>=1.18,<2",
+]
+saas = [
+  "aiosmtplib>=4,<6",
+  "boto3>=1.40,<2",
+  "cryptography>=45,<47",
+  "email-validator>=2.2,<3",
+  "httpx>=0.28,<1",
+  "pillow>=11,<13",
+  "pwdlib[argon2]>=0.3,<1",
+  "pyjwt>=2.10,<3",
+  "temporalio>=1.18,<2",
+]
+full = [
+  "aiosmtplib>=4,<6",
+  "boto3>=1.40,<2",
+  "cryptography>=45,<47",
+  "langchain-core>=1.6,<2",
+  "langchain-openai>=1.0,<2",
+  "langgraph>=1.2,<2",
+  "httpx>=0.28,<1",
+  "pillow>=11,<13",
+  "pwdlib[argon2]>=0.3,<1",
+  "pyjwt>=2.10,<3",
+  "temporalio>=1.18,<2",
+  "opentelemetry-api>=1.29,<2",
+  "opentelemetry-sdk>=1.29,<2",
+  "opentelemetry-exporter-otlp-proto-http>=1.29,<2",
+]
+[project.scripts]
+backend = "backend_foundation.cli:main"
+[dependency-groups]
+dev = [
+  "gradio>=5.49,<7",
+  "aiosmtplib>=4,<6",
+  "boto3>=1.40,<2",
+  "cryptography>=45,<47",
+  "httpx>=0.28,<1",
+  "pillow>=11,<13",
+  "langchain-core>=1.6,<2",
+  "langgraph>=1.2,<2",
+  "langgraph-cli[inmem]>=0.4,<1",
+  "langchain-openai>=1.0,<2",
+  "mypy>=1.17,<2",
+  "pytest>=8.4,<9",
+  "pytest-asyncio>=1.1,<2",
+  "pytest-cov>=6.2,<7",
+  "pwdlib[argon2]>=0.3,<1",
+  "pyjwt>=2.10,<3",
+  "ruff>=0.12,<1",
+  "temporalio>=1.18,<2",
+]
+[tool.uv]
+default-groups = ["dev"]
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["templates"]
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-m 'not integration'"
+markers = [
+  "integration: requires Docker and starts real local infrastructure",
+  "profiles: generated-profile migration validation",
+  "jobs: PostgreSQL and Temporal jobs validation",
+  "identity: registration, Temporal, SMTP, and Mailpit validation",
+  "saas: authenticated MinIO storage validation",
+  "full: complete local stack validation",
+  "isolation: two generated projects running concurrently",
+]
+[tool.coverage.run]
+source = ["backend_foundation"]
+omit = [
+  "src/backend_foundation/dev.py",
+  "src/backend_foundation/gradio_app.py",
+  "src/backend_foundation/modules/temporal/worker.py",
+]
+[tool.mypy]
+python_version = "3.12"
+strict = true
+exclude = "(^|/)(alembic|tests)/"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.hatch.build.targets.wheel]
+packages = ["src/backend_foundation"]
+[tool.hatch.build.targets.wheel.force-include]
+templates = "backend_foundation/templates"

@@ -1,0 +1,18 @@
+name = "jobs"
+version = "0.2.0"
+description = "Durable Temporal jobs and transactional outbox"
+requires = ["database", "temporal"]
+profiles = ["workflow", "identity", "saas", "full"]
+optional_extra = "workflow"
+provides_router = false
+provides_lifespan = false
+provides_health_check = false
+provides_workflows = true
+provides_activities = true
+model_imports = ["modules.jobs.models"]
+permissions = ["jobs:read", "jobs:cancel", "jobs:retry", "jobs:manage", "jobs:schedules:manage", "jobs:webhooks:manage", "platform:jobs:*"]
+required_env = []
+optional_env = ["JOBS_POLL_INTERVAL_SECONDS", "JOBS_BATCH_SIZE", "JOBS_GLOBAL_CONCURRENCY", "JOBS_TENANT_CONCURRENCY", "JOBS_LEASE_SECONDS", "JOBS_MAX_BATCH_SIZE", "JOBS_WEBHOOK_ENCRYPTION_KEY"]
+compose_files = []
+python_dependencies = ["temporalio>=1.18,<2"]
+migrations = ["migrations/jobs.py"]

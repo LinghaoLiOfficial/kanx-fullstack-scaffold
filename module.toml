@@ -1,0 +1,7 @@
+name = "backend-foundation"
+version = "0.1.0"
+description = "Composable backend foundation repository"
+slug = "backend-foundation"
+package = "backend_foundation"
+profile = "full"
+modules = ["database", "temporal", "ai"]

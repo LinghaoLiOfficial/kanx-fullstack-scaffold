@@ -1,0 +1,17 @@
+name = "email"
+version = "0.1.0"
+description = "SMTP email templates and durable delivery"
+requires = ["jobs"]
+profiles = ["identity", "saas", "full"]
+optional_extra = "identity"
+provides_router = false
+provides_lifespan = false
+provides_health_check = false
+provides_workflows = false
+provides_activities = true
+model_imports = []
+permissions = []
+required_env = []
+optional_env = ["EMAIL_SMTP_HOST", "EMAIL_SMTP_PORT", "EMAIL_FROM_ADDRESS"]
+compose_files = ["mailpit"]
+python_dependencies = ["aiosmtplib>=4,<6"]

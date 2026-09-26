@@ -1,0 +1,2 @@
+name = "ai"
+modules = ["database", "ai"]

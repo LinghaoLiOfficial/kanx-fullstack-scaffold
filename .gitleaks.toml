@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Phase 4 integration idempotency labels are not credentials"
+condition = "AND"
+paths = ['''tests/integration/test_phase4\.py''']
+regexes = ['''^phase4-(?:permanent|exponential)$''']

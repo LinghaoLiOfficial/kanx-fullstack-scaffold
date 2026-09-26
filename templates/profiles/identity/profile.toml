@@ -1,0 +1,2 @@
+name = "identity"
+modules = ["database", "temporal", "jobs", "users", "rbac", "email", "auth"]
