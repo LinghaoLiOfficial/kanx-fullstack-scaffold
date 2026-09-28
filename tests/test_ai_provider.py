@@ -6,7 +6,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import pytest
 from pydantic import BaseModel
 
-from backend_foundation.modules.ai.provider import create_chat_model, structured_output
+from backend_foundation.modules.ai.provider import (
+    create_chat_model,
+    invoke_structured_model,
+    structured_output,
+)
 from backend_foundation.modules.ai.settings import AISettings, LLMTaskConfig
 
 
@@ -105,6 +109,47 @@ def test_create_chat_model_uses_task_config() -> None:
 
 class Answer(BaseModel):
     answer: str
+
+
+@pytest.mark.asyncio
+async def test_structured_invocation_records_real_attempts_without_secrets() -> None:
+    class FakeStructured:
+        calls = 0
+
+        async def ainvoke(self, _messages: object) -> dict[str, object]:
+            self.calls += 1
+            if self.calls == 1:
+                raise RuntimeError("provider authorization header secret")
+            return {
+                "raw": type(
+                    "Raw",
+                    (),
+                    {
+                        "model_dump": lambda self, **_kwargs: {"content": '{"answer":"ok"}'},
+                    },
+                )(),
+                "parsed": Answer(answer="ok"),
+                "parsing_error": None,
+            }
+
+    class FakeModel:
+        def __init__(self) -> None:
+            self.structured = FakeStructured()
+
+        def with_structured_output(self, _schema: object, **_kwargs: object) -> FakeStructured:
+            return self.structured
+
+    result = await invoke_structured_model(
+        FakeModel(),
+        Answer,
+        [{"role": "user", "content": "hello"}],
+        max_retries=1,
+    )
+    assert len(result["attempts"]) == 2
+    assert result["attempts"][0]["status"] == "failed"
+    assert result["attempts"][1]["status"] == "success"
+    assert result["attempts"][0]["retry_reason"]
+    assert "secret" not in str(result)
 
 
 @pytest.mark.asyncio

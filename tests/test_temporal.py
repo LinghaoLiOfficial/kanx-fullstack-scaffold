@@ -7,6 +7,7 @@ from backend_foundation.core.config import Settings
 from backend_foundation.modules.temporal.client import connect_temporal
 from backend_foundation.modules.temporal.module import temporal_health_checks, temporal_lifespan
 from backend_foundation.modules.temporal.workflows import database_smoke_activity
+from backend_foundation.core.modules import ModuleSpec
 
 
 @pytest.mark.asyncio
@@ -74,3 +75,47 @@ async def test_database_smoke_activity(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert await database_smoke_activity("postgresql://test") == "ok-workflow"
     assert engine.disposed
+
+
+@pytest.mark.asyncio
+async def test_worker_applies_activity_concurrency(monkeypatch: pytest.MonkeyPatch) -> None:
+    from backend_foundation.modules.temporal import worker as worker_module
+
+    captured: dict[str, object] = {}
+
+    class Engine:
+        async def dispose(self) -> None:
+            captured["disposed"] = True
+
+    class WorkerContext:
+        def __init__(self, _client: object, **kwargs: object) -> None:
+            captured.update(kwargs)
+
+        async def __aenter__(self) -> None:
+            return None
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    class Event:
+        async def wait(self) -> None:
+            return None
+
+    async def fake_connect(_settings: Settings) -> object:
+        return object()
+
+    monkeypatch.setattr(worker_module, "create_engine", lambda _settings: Engine())
+    monkeypatch.setattr(worker_module, "connect_temporal", fake_connect)
+    monkeypatch.setattr(worker_module, "Worker", WorkerContext)
+    monkeypatch.setattr(worker_module.asyncio, "Event", Event)
+    settings = Settings(
+        _env_file=None,
+        app_profile="workflow",
+        temporal_max_concurrent_activities=37,
+    )
+    modules = (ModuleSpec(name="temporal", workflows=(object(),)),)
+
+    await worker_module.run_worker(settings, modules)
+
+    assert captured["max_concurrent_activities"] == 37
+    assert captured["disposed"] is True

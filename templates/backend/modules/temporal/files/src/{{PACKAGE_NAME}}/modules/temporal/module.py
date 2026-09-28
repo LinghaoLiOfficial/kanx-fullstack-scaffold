@@ -35,6 +35,7 @@ module = ModuleSpec(
     health_checks=temporal_health_checks,
     workflows=(SmokeWorkflow,),
     activities=(smoke_activity,),
+    optional_env=("TEMPORAL_WORKER_PROCESSES", "TEMPORAL_MAX_CONCURRENT_ACTIVITIES"),
     optional_dependencies=("temporalio>=1.18,<2",),
     compose_capabilities=(
         ComposeCapability("temporal"),

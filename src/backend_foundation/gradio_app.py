@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from typing import cast
 
@@ -17,13 +18,20 @@ from backend_foundation.manifest import (
     load_profiles,
     resolve_manifest_modules,
 )
-from backend_foundation.modules.ai.graph import run_smoke_graph
+from backend_foundation.modules.ai.graph import WorkflowMode, run_workflow
+from backend_foundation.modules.ai.gradio_console import WORKFLOW_CSS, build_workflow_console
 
 
-async def run_smoke(value: str) -> str:
+async def run_smoke(value: str, mode: WorkflowMode | None = None) -> str:
     if not value.strip():
         return "请输入测试内容"
-    return await run_smoke_graph(value.strip())
+    try:
+        result = await run_workflow(value.strip(), mode or "mock")
+        if mode is None:
+            return str(result["summary"])
+        return json.dumps(result, ensure_ascii=False, indent=2)
+    except Exception as error:
+        return f"Workflow 执行失败：{error}"
 
 
 def _selected_modules(profile: str, additional: list[str] | None) -> tuple[str, ...]:
@@ -102,10 +110,7 @@ def _build_ai_console() -> None:
     with gr.Row():
         gr.Markdown(f"运行环境：`{settings.app_env}`")
         gr.Markdown(f"API 地址：`{settings.api_host}:{settings.api_port}`")
-    value = gr.Textbox(label="Smoke Graph 输入", value="hello")
-    output = gr.Textbox(label="输出", interactive=False)
-    run = gr.Button("运行通用测试", variant="primary")
-    run.click(run_smoke, inputs=value, outputs=output)
+    build_workflow_console()
 
 
 def build_demo() -> gr.Blocks:
@@ -123,6 +128,7 @@ def main() -> None:
     build_demo().launch(
         server_name=settings.gradio_host,
         server_port=settings.gradio_port,
+        css=WORKFLOW_CSS,
         show_error=False,
     )
 

@@ -27,6 +27,17 @@ def test_api_profile_does_not_enable_temporal() -> None:
     assert dev._profile_enabled(Settings(_env_file=None, app_profile=AppProfile.FULL))
 
 
+def test_application_commands_create_configured_worker_processes() -> None:
+    settings = Settings(
+        _env_file=None,
+        app_profile=AppProfile.WORKFLOW,
+        temporal_worker_processes=3,
+    )
+    commands = dev.application_commands(settings)
+    worker_command = [dev.sys.executable, "-m", "backend_foundation.modules.temporal.worker"]
+    assert commands.count(worker_command) == 3
+
+
 def test_port_available_accepts_owned_container(monkeypatch: pytest.MonkeyPatch) -> None:
     class OccupiedSocket:
         def __enter__(self):

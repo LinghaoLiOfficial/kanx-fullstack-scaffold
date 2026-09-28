@@ -90,6 +90,8 @@ class Settings(EnvironmentSettings):
     temporal_ui_url: str = "http://localhost:8233"
     temporal_namespace: str = "backend-foundation"
     temporal_task_queue: str = "backend-foundation-worker"
+    temporal_worker_processes: int = Field(default=1, ge=1, le=64)
+    temporal_max_concurrent_activities: int = Field(default=100, ge=1, le=10000)
     temporal_auto_register_namespace: bool | None = None
 
     email_smtp_host_port: int = Field(default=1025, ge=1, le=65535)

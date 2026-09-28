@@ -15,6 +15,7 @@ module = ModuleSpec(
         "AI_TEMPERATURE",
         "AI_MAX_TOKENS",
         "AI_TASK_CONFIGS",
+        "AI_WORKFLOW_MODE",
     ),
     optional_dependencies=(
         "langchain-core>=1.6,<2",

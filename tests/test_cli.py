@@ -73,12 +73,25 @@ def test_ai_project_configures_gradio_bind_address(tmp_path: Path) -> None:
     gradio_app = (destination / "backend" / "src" / "demo_ai" / "gradio_app.py").read_text(
         encoding="utf-8"
     )
+    gradio_console = (
+        destination
+        / "backend"
+        / "src"
+        / "demo_ai"
+        / "modules"
+        / "ai"
+        / "gradio_console.py"
+    ).read_text(encoding="utf-8")
 
     assert "GRADIO_HOST=127.0.0.1" in env_example
     assert "GRADIO_PORT=7860" in env_example
     assert "server_name=settings.gradio_host" in gradio_app
     assert "server_port=settings.gradio_port" in gradio_app
     assert "AI_TASK_CONFIGS={}" in env_example
+    assert "LLM 输入 JSON" in gradio_console
+    assert "gr.Tabs()" in gradio_console
+    assert "LLM Task / Call / Attempt" in gradio_console
+    assert "Global run summary" in gradio_console
 
 
 def test_generated_identity_runtime_contract(tmp_path: Path) -> None:
@@ -116,6 +129,11 @@ def test_generated_custom_composition_uses_module_registry_for_runtime_workers(
     assert "INSTALLED_MODULES" in worker
     assert '"temporal" not in INSTALLED_MODULES' in worker
     assert "_has_unknown_migration_revision" in dev
+    assert "range(settings.temporal_worker_processes)" in dev
+    assert "max_concurrent_activities=configured.temporal_max_concurrent_activities" in worker
+    env_example = (destination / "backend" / ".env.example").read_text(encoding="utf-8")
+    assert "TEMPORAL_WORKER_PROCESSES=1" in env_example
+    assert "TEMPORAL_MAX_CONCURRENT_ACTIVITIES=100" in env_example
 
 
 def test_generated_project_ignores_local_environment_files(tmp_path: Path) -> None:

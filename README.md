@@ -83,6 +83,12 @@ make infra-reset  # 显式删除当前项目 volume
 `http://localhost:8233`。identity 以上 profile 的 Mailpit UI 默认为
 `http://localhost:8025`，saas/full 的 MinIO Console 默认为 `http://localhost:9001`。
 
+Temporal profile 默认启动一个 Worker 进程。可通过 `TEMPORAL_WORKER_PROCESSES` 启动多个
+进程，它们共同轮询同一个 `TEMPORAL_TASK_QUEUE`；`TEMPORAL_MAX_CONCURRENT_ACTIVITIES` 设置
+每个 Worker 进程允许并发执行的 Activity 数。因而理论 Activity 总容量约为两者乘积，例如
+`3 × 20 = 60`。扩容时应同步核对数据库连接池、LLM/HTTP Provider 限流和其他下游容量。
+这两个配置不替代 `JOBS_GLOBAL_CONCURRENCY` 与 `JOBS_TENANT_CONCURRENCY` 的任务准入限制。
+
 ## 通用模块
 
 - `jobs` 使用数据库唯一约束、transactional outbox 与 Temporal 实现幂等任务、版本化类型、
@@ -93,17 +99,30 @@ make infra-reset  # 显式删除当前项目 volume
 - `email` 只发送预注册模板，并通过 `email.send` Job 投递。Mailpit 仅是本地开发收件箱。
 - `storage` 使用私有 S3-compatible bucket，支持单次/分片预签名上传、断点续传、应用级文件
   版本、媒体元数据与隔离、生命周期清理、签名 S3 事件、私有 CDN 下载。MinIO 仅是本地 provider。
-- `ai` 提供 lazy OpenAI-compatible ChatModel factory、timeout/retry、结构化输出 helper 和
-  示例 LangGraph；支持默认 LLM 配置与按任务局部覆盖，readiness 不发送收费请求，也不会记录
-  prompt、key 或完整响应。
+- `ai` 提供 lazy OpenAI-compatible ChatModel factory、timeout/retry 和一个可在 Gradio 中运行的
+  三任务 LangGraph（`summarize`、`extract`、`classify`）。默认 `mock` 模式无需 API Key 即可离线
+  测试；切换为 `llm` 后按任务调用真实模型。每个 LLM 节点均使用显式 system message，分别将
+  模型设定为摘要、结构化信息抽取或文本分类专家。三个任务统一使用 `json_mode`，各自的显式
+  `output_schema` 会加入实际 system message 并用于响应校验；不会记录 key 或敏感 Provider header。
 
-AI 模块以 `AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL`、`AI_TEMPERATURE`、
-`AI_MAX_TOKENS` 等作为默认配置。通过 `AI_TASK_CONFIGS` JSON 可为不同任务只覆盖所需字段，
+AI 模块以 `AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL`、`AI_CONNECT_TIMEOUT_SECONDS`、
+`AI_READ_TIMEOUT_SECONDS`、`AI_TEMPERATURE`、`AI_MAX_TOKENS` 等作为默认配置；连接超时默认
+为 20 秒，读取超时默认为 300 秒，均可通过环境变量覆盖。通过 `AI_TASK_CONFIGS` JSON 可为不同任务只覆盖所需字段，
 未覆盖字段自动继承默认值，未配置的任务则完整使用默认配置：
 
 ```dotenv
 AI_TASK_CONFIGS={"summarize":{"model":"gpt-5-mini","temperature":0.2},"extract":{"base_url":"https://llm.example/v1","api_key":"task-key","model":"extract-model"}}
 ```
+
+通过 `AI_WORKFLOW_MODE=mock|llm` 设置默认运行模式；Gradio 也可在界面中切换。
+调试台提供新闻、问题、请求、投诉、技术报告和混合意图示例按钮，并为三个任务分别展示
+实际 system/user 输入、原始模型响应、结构化结果、模型与 Provider、耗时、token 用量和执行状态。
+输入 JSON 与解析输出 JSON 分别按 `summarize`、`extract`、`classify` 使用标签页切换查看。
+拓扑图直接读取 LangGraph 的阶段和边定义，以矩形表示节点、箭头表示边；执行期间按流式事件
+和 250ms 运行心跳更新节点的等待、运行、成功、失败状态及耗时。
+调试台同时提供全局 Run 摘要、LLM Task/Call/Attempt 重试记录、输入/Prompt/Schema 指纹、
+Validation/Gate Checks 和可扩展 Workflow artifacts；Semantic、Control、Audit 信息分层展示，
+敏感 key、Authorization 和 Provider headers 会被脱敏。
 
 部署平台也可使用分层环境变量，例如
 `AI_TASK_CONFIGS__SUMMARIZE__MODEL=gpt-5-mini`。代码中通过

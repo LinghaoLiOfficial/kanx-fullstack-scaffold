@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Any, Self
+from typing import Any, Literal, Self
 
 from pydantic import BaseModel, Field, SecretStr, field_validator, model_validator
 
@@ -10,8 +10,8 @@ class LLMConfig(BaseModel):
     base_url: str = "https://api.openai.com/v1"
     api_key: SecretStr = SecretStr("")
     model: str = "gpt-4.1-mini"
-    connect_timeout_seconds: float = Field(default=5, gt=0, le=120)
-    read_timeout_seconds: float = Field(default=60, gt=0, le=600)
+    connect_timeout_seconds: float = Field(default=20, gt=0, le=120)
+    read_timeout_seconds: float = Field(default=300, gt=0, le=600)
     max_retries: int = Field(default=2, ge=0, le=10)
     temperature: float = Field(default=0, ge=0, le=2)
     max_tokens: int = Field(default=2048, ge=1)
@@ -63,6 +63,7 @@ class AISettings(LLMConfig, EnvironmentSettings):
     }
 
     task_configs: dict[str, LLMTaskConfig] = Field(default_factory=dict)
+    workflow_mode: Literal["mock", "llm"] = "mock"
 
     @field_validator("task_configs")
     @classmethod

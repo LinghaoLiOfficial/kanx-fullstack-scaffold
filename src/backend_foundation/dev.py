@@ -283,11 +283,11 @@ async def smoke(settings: Settings) -> None:
     print(f"smoke: ok ({', '.join(results)})")
 
 
-def run_application_processes(settings: Settings) -> None:
+def application_commands(settings: Settings) -> list[list[str]]:
     commands = [
         [
-            "uv",
-            "run",
+            sys.executable,
+            "-m",
             "uvicorn",
             "backend_foundation.app:app",
             "--host",
@@ -298,11 +298,19 @@ def run_application_processes(settings: Settings) -> None:
         ]
     ]
     if _profile_enabled(settings):
-        commands.append(["uv", "run", "python", "-m", "backend_foundation.modules.temporal.worker"])
+        commands.extend(
+            [sys.executable, "-m", "backend_foundation.modules.temporal.worker"]
+            for _ in range(settings.temporal_worker_processes)
+        )
     if _jobs_enabled(settings):
-        commands.append(["uv", "run", "python", "-m", "backend_foundation.modules.jobs.dispatcher"])
+        commands.append([sys.executable, "-m", "backend_foundation.modules.jobs.dispatcher"])
     if _ai_enabled(settings):
-        commands.append(["uv", "run", "python", "-m", "backend_foundation.gradio_app"])
+        commands.append([sys.executable, "-m", "backend_foundation.gradio_app"])
+    return commands
+
+
+def run_application_processes(settings: Settings) -> None:
+    commands = application_commands(settings)
     processes = [subprocess.Popen(command, cwd=ROOT) for command in commands]
     wait_for_port("127.0.0.1", settings.api_port)
     if _ai_enabled(settings):

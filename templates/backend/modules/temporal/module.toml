@@ -12,6 +12,6 @@ provides_activities = true
 model_imports = []
 permissions = []
 required_env = ["TEMPORAL_HOST", "TEMPORAL_NAMESPACE", "TEMPORAL_TASK_QUEUE"]
-optional_env = ["TEMPORAL_HOST_PORT", "TEMPORAL_UI_PORT"]
+optional_env = ["TEMPORAL_HOST_PORT", "TEMPORAL_UI_PORT", "TEMPORAL_WORKER_PROCESSES", "TEMPORAL_MAX_CONCURRENT_ACTIVITIES"]
 compose_files = ["temporal", "temporal-ui", "namespace"]
 python_dependencies = ["temporalio>=1.18,<2"]

@@ -23,6 +23,15 @@ async def test_liveness_and_request_id() -> None:
 
 
 @pytest.mark.asyncio
+async def test_root_returns_service_status() -> None:
+    app = create_app(Settings(_env_file=None), modules=())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"name": "backend-foundation", "status": "ok", "docs": "/docs"}
+
+
+@pytest.mark.asyncio
 async def test_credentialed_cors_contract() -> None:
     app = create_app(
         Settings(_env_file=None, cors_allowed_origins="http://localhost:3000"), modules=()

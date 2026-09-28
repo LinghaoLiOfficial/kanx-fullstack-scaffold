@@ -238,7 +238,7 @@ def migrate(settings: Settings) -> None:
     _run([sys.executable, "-m", "alembic", "upgrade", "head"])
 
 
-def run_application_processes(settings: Settings) -> None:
+def application_commands(settings: Settings) -> list[list[str]]:
     commands = [
         [
             sys.executable,
@@ -253,11 +253,19 @@ def run_application_processes(settings: Settings) -> None:
         ]
     ]
     if _has("temporal"):
-        commands.append([sys.executable, "-m", "{{PACKAGE_NAME}}.modules.temporal.worker"])
+        commands.extend(
+            [sys.executable, "-m", "{{PACKAGE_NAME}}.modules.temporal.worker"]
+            for _ in range(settings.temporal_worker_processes)
+        )
     if _has("jobs"):
         commands.append([sys.executable, "-m", "{{PACKAGE_NAME}}.modules.jobs.dispatcher"])
     if _has("ai"):
         commands.append([sys.executable, "-m", "{{PACKAGE_NAME}}.gradio_app"])
+    return commands
+
+
+def run_application_processes(settings: Settings) -> None:
+    commands = application_commands(settings)
     processes = [subprocess.Popen(command, cwd=ROOT) for command in commands]
     wait_for_port(settings.api_port)
     if _has("ai"):

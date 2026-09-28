@@ -13,6 +13,8 @@ def test_settings_defaults() -> None:
     assert settings.database_host_port == 55432
     assert settings.docker_project_name == "backend-foundation"
     assert settings.temporal_ui_url == "http://localhost:8233"
+    assert settings.temporal_worker_processes == 1
+    assert settings.temporal_max_concurrent_activities == 100
     assert settings.auto_register_namespace
     assert not Settings(_env_file=None, app_env="production").auto_register_namespace
 
@@ -20,6 +22,25 @@ def test_settings_defaults() -> None:
 def test_settings_reject_invalid_port() -> None:
     with pytest.raises(ValidationError):
         Settings(_env_file=None, api_port=0)
+
+
+def test_temporal_worker_concurrency_can_be_configured_from_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TEMPORAL_WORKER_PROCESSES", "3")
+    monkeypatch.setenv("TEMPORAL_MAX_CONCURRENT_ACTIVITIES", "24")
+    settings = Settings(_env_file=None)
+    assert settings.temporal_worker_processes == 3
+    assert settings.temporal_max_concurrent_activities == 24
+
+
+@pytest.mark.parametrize(
+    "field",
+    ("temporal_worker_processes", "temporal_max_concurrent_activities"),
+)
+def test_temporal_worker_concurrency_must_be_positive(field: str) -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, **{field: 0})
 
 
 def test_settings_reject_invalid_slug() -> None:
